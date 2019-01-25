@@ -6,6 +6,7 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using SimpleBot.Logic;
+using SimpleBot.MongoDB;
 
 namespace SimpleBot
 {
@@ -13,6 +14,7 @@ namespace SimpleBot
     public class MessagesController : ApiController
     {
         static SimpleBotUser g_bot = null;
+        static DAO mongoDAO = null;
 
         public MessagesController()
         {
@@ -20,6 +22,11 @@ namespace SimpleBot
             if (g_bot == null)
             {
                 g_bot = new SimpleBotUser();
+            }
+
+            if (mongoDAO == null)
+            {
+                mongoDAO = new DAO();
             }
         }
 
@@ -44,6 +51,8 @@ namespace SimpleBot
 
             var message = new SimpleMessage(userFromId, userFromName, text);
 
+            mongoDAO.Insert(message);
+            
             string response = g_bot.Reply(message);
 
             await ReplyUserAsync(activity, response);
@@ -54,7 +63,6 @@ namespace SimpleBot
         {
             var connector = new ConnectorClient(new Uri(message.ServiceUrl));
             var reply = message.CreateReply(text);
-
             await connector.Conversations.ReplyToActivityAsync(reply);
         }
     }
